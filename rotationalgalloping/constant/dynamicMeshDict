@@ -1,0 +1,102 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dynamicFvMesh   dynamicMotionSolverFvMesh;
+
+motionSolverLibs ( "libsixDoFRigidBodyMotion.so" );
+
+solver          sixDoFRigidBodyMotion;
+
+
+displacementLaplacianCoeffs
+{
+    diffusivity  inverseDistance 2.0 (cylinder);
+}
+
+
+sixDoFRigidBodyMotionCoeffs
+{
+    patches         (cylinder);
+    innerDistance   0.1;
+    outerDistance   6;
+
+    mass            20.0;
+    centreOfMass    (0.0 0.0 0.5);
+    momentOfInertia (400.0 400.0 400.0);
+    orientation
+    (
+    1 0 0
+    0 1 0
+    0 0 1
+    );
+
+    velocity        (0.0  0.0  0.0 );
+    angularMomentum (0.0  0.0  0.0);
+    g               (0.0  0.0  0.0);
+
+    rho             rhoInf;
+    rhoInf          1;
+    report          on;
+    reportToFile    on;
+
+    accelerationRelaxation 1.0;
+    accelerationDamping    1.0;
+    
+    solver
+    {
+        type    Newmark;
+        gamma   0.5;    // Velocity integration coefficient
+        beta    0.25;   // Position integration coefficient
+    }
+
+    constraints
+    {
+        xyplane
+        {
+            sixDoFRigidBodyMotionConstraint   plane;
+            normal                            (0 0 1);
+        }
+
+        zAxis
+        {
+            sixDoFRigidBodyMotionConstraint axis;
+            axis                (0 0 1);
+        }
+
+        pivotPoint
+        {
+            sixDoFRigidBodyMotionConstraint   point;
+            centreOfRotation                  (0 0 0.5);
+        }
+    }
+
+    restraints
+    {
+        rotationalSpring
+        {
+            sixDoFRigidBodyMotionRestraint        linearAxialAngularSpring;
+            axis                                  (0.0 0.0 1.0);
+            stiffness                             61.685;
+            damping                               78.54;
+            //referenceOrientation                  (1 0 0);
+        }
+    }
+}
+
+
+
+// ************************************************************************* //
